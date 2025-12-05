@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Campus AI Assistant</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      /* --- CSS STYLES --- */
+      :root {
+        --primary: #4361ee;
+        --secondary: #3a0ca3;
+        --success: #4cc9f0;
+        --warning: #f72585;
+        --danger: #e74c3c;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --card-bg: rgba(255, 255, 255, 0.98);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      body {
+        background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+        color: #333;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 30px;
+        color: white;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 1;
+      }
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .agent-selector {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 25px 0;
+        flex-wrap: wrap;
+      }
+      .agent-btn {
+        padding: 12px 25px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        backdrop-filter: blur(5px);
+      }
+      .agent-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-3px);
+      }
+      .agent-btn.active {
+        background: var(--primary);
+        box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 25px;
+      }
+      .agent-container {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 0;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        display: none;
+        min-height: 600px;
+      }
+      .agent-container.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .agent-header {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .agent-title-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .agent-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .agent-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+      }
+      .agent-description {
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+      .agent-content {
+        padding: 25px;
+      }
+
+      .input-group {
+        display: flex;
+        margin-bottom: 20px;
+      }
+      .input-group input,
+      .input-group select {
+        flex-grow: 1;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px 0 0 8px;
+        font-size: 1rem;
+        outline: none;
+      }
+      .input-group button {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0 25px;
+        border-radius: 0 8px 8px 0;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.3s;
+      }
+      .input-group button:hover {
+        background: var(--secondary);
+      }
+
+      /* Timetable */
+      .timetable-container {
+        overflow-x: auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-top: 20px;
+        max-height: 500px;
+        border: 1px solid #eee;
+      }
+      .timetable {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        min-width: 600px;
+      }
+      .timetable th {
+        background: var(--primary);
+        color: white;
+        padding: 15px;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .timetable td {
+        padding: 10px;
+        border: 1px solid #eee;
+        text-align: center;
+        vertical-align: middle;
+        height: 80px;
+      }
+      .time-slot-header {
+        background: #f8f9fa;
+        font-weight: bold;
+        color: var(--secondary);
+        width: 100px;
+      }
+      .class-slot {
+        background-color: #eef2ff;
+        border-left: 4px solid var(--primary);
+        border-radius: 4px;
+        padding: 8px;
+        cursor: pointer;
+        text-align: left;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        font-size: 0.85rem;
+        transition: 0.2s;
+      }
+      .class-slot:hover {
+        background-color: #e0e7ff;
+        transform: translateY(-2px);
+      }
+      .class-name {
+        font-weight: 700;
+        color: var(--secondary);
+        display: block;
+        margin-bottom: 3px;
+      }
+      .free-slot {
+        color: #adb5bd;
+        font-style: italic;
+        font-size: 0.85rem;
+      }
+
+      /* Modals */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(3px);
+        animation: fadeIn 0.3s;
+        overflow-y: auto;
+      }
+      .modal-content {
+        background-color: #fff;
+        margin: 5% auto;
+        padding: 0;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        position: relative;
+        animation: slideDown 0.3s;
+        display: flex;
+        flex-direction: column;
+        border: none;
+      }
+      .modal-header {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 20px 30px;
+        border-radius: 20px 20px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .close-modal {
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        transition: 0.2s;
+      }
+      .close-modal:hover {
+        color: white;
+        transform: scale(1.1);
+      }
+      .modal-body {
+        padding: 30px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #444;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 14px;
+        background: #f8f9fa;
+        border: 2px solid #eee;
+        border-radius: 12px;
+        font-size: 1rem;
+        outline: none;
+        transition: all 0.3s ease;
+      }
+      .form-group input:focus,
+      .form-group select:focus {
+        background: #fff;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+      }
+      .modal-actions {
+        padding: 20px 30px;
+        background: #f8f9fa;
+        border-radius: 0 0 20px 20px;
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+      }
+      .btn-save {
+        background: var(--success);
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s;
+        box-shadow: 0 4px 10px rgba(76, 201, 240, 0.3);
+      }
+      .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(76, 201, 240, 0.4);
+      }
+      .btn-cancel {
+        background: white;
+        color: #666;
+        border: 1px solid #ddd;
+        padding: 12px 25px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s;
+      }
+      .btn-cancel:hover {
+        background: #eee;
+      }
+
+      /* Sidebar & Lists */
+      .task-list {
+        list-style-type: none;
+        margin-bottom: 20px;
+      }
+      .task-list li {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .task-list li:hover {
+        background: #f1f5ff;
+      }
+
+      .task-left {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+      }
+      .task-list i {
+        margin-right: 12px;
+        font-size: 1.1rem;
+      }
+      .task-info {
+        flex-grow: 1;
+      }
+      .task-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .task-meta {
+        font-size: 0.8rem;
+        color: #777;
+      }
+      .priority-badge {
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        color: white;
+        font-weight: bold;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+      .priority-high {
+        background-color: var(--danger);
+      }
+      .priority-medium {
+        background-color: var(--primary);
+      }
+      .priority-low {
+        background-color: var(--success);
+      }
+
+      .delete-btn {
+        background: none;
+        border: none;
+        color: #ff6b6b;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        transition: 0.2s;
+      }
+      .delete-btn:hover {
+        background: #fff0f0;
+        color: #e74c3c;
+        transform: scale(1.1);
+      }
+
+      /* CLICKABLE NOTIFICATIONS */
+      .notification-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+      .notification-item:hover {
+        background: #f8f9fa;
+      }
+      .notification-item:hover i {
+        transform: scale(1.1);
+        transition: transform 0.2s;
+      }
+
+      /* CHAT CHIPS */
+      .chat-chip {
+        background: white;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        margin: 4px 4px 4px 0;
+        cursor: pointer;
+        transition: 0.2s;
+        display: inline-block;
+      }
+      .chat-chip:hover {
+        background: var(--primary);
+        color: white;
+      }
+
+      /* NEW: Chat Calendar Grid */
+      .chat-calendar {
+        background: white;
+        border-radius: 10px;
+        padding: 10px;
+        margin-top: 5px;
+        width: 250px;
+      }
+      .calendar-month-title {
+        text-align: center;
+        font-weight: bold;
+        color: var(--primary);
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+      }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+      }
+      .calendar-day-header {
+        font-size: 0.7rem;
+        color: #888;
+        text-align: center;
+      }
+      .calendar-day {
+        padding: 5px;
+        text-align: center;
+        font-size: 0.85rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: 0.2s;
+        background: #f8f9fa;
+      }
+      .calendar-day:hover {
+        background: var(--primary);
+        color: white;
+      }
+      .calendar-day.today {
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        font-weight: bold;
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+      }
+      .card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+      .chart-container {
+        height: 180px;
+        margin-top: 15px;
+      }
+
+      .chat-card {
+        display: flex;
+        flex-direction: column;
+        height: 450px;
+        background: #fff;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      }
+      .chat-header-modern {
+        background: var(--primary);
+        padding: 15px 20px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .chat-status {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #2ecc71;
+        border-radius: 50%;
+        box-shadow: 0 0 5px #2ecc71;
+      }
+      .chat-messages {
+        flex-grow: 1;
+        background: #f8f9fa;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow-y: auto;
+      }
+
+      .message {
+        max-width: 85%;
+        padding: 12px 16px;
+        border-radius: 18px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        position: relative;
+        animation: popIn 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+      @keyframes popIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .user-message {
+        align-self: flex-end;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-bottom-right-radius: 4px;
+      }
+      .ai-message {
+        align-self: flex-start;
+        background: white;
+        color: #333;
+        border-bottom-left-radius: 4px;
+        border: 1px solid #eee;
+      }
+
+      .chat-input-area {
+        padding: 15px;
+        background: white;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .chat-input-area input {
+        flex-grow: 1;
+        padding: 12px 15px;
+        border: 2px solid #f0f0f0;
+        border-radius: 25px;
+        outline: none;
+        transition: 0.3s;
+        font-size: 0.95rem;
+      }
+      .chat-input-area input:focus {
+        border-color: var(--primary);
+      }
+      .chat-send-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s;
+        box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+      }
+      .chat-send-btn:hover {
+        transform: scale(1.1);
+      }
+      .chat-reset-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .chat-reset-btn:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: rotate(180deg);
+      }
+
+      /* HIGHLIGHT ANIMATION */
+      @keyframes highlightPulse {
+        0% {
+          background-color: rgba(255, 240, 0, 0.4);
+          transform: scale(1.02);
+          box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        100% {
+          background-color: transparent;
+          transform: scale(1);
+          box-shadow: none;
+        }
+      }
+      .highlight-active {
+        animation: highlightPulse 2.5s ease-out forwards;
+        border-left: 5px solid var(--warning) !important;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        margin-top: 40px;
+        padding: 20px;
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+      @media (max-width: 1100px) {
+        .dashboard {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          grid-row: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Smart Campus AI Assistant</h1>
+        <div class="agent-selector">
+          <button class="agent-btn active" data-agent="timetable">
+            <i class="fas fa-calendar-alt"></i> Timetable
+          </button>
+          <button class="agent-btn" data-agent="assignment">
+            <i class="fas fa-tasks"></i> Tasks
+          </button>
+        </div>
+      </header>
+
+      <div class="dashboard">
+        <div class="main-content">
+          <div class="agent-container active" id="timetable-agent">
+            <div class="agent-header">
+              <div class="agent-title-group">
+                <div class="agent-icon">
+                  <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div>
+                  <div class="agent-title">Timetable Agent</div>
+                  <div class="agent-description">
+                    Manage classes & find free slots
+                  </div>
+                </div>
+              </div>
+              <button
+                id="open-class-modal"
+                class="agent-btn"
+                style="
+                  background: var(--success);
+                  width: auto;
+                  display: inline-flex;
+                  padding: 8px 20px;
+                  font-size: 0.9rem;
+                "
+              >
+                <i class="fas fa-plus"></i> Add Class
+              </button>
+            </div>
+            <div class="agent-content">
+              <h3>Weekly Schedule</h3>
+              <div class="timetable-container">
+                <table class="timetable" id="weekly-timetable">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Monday</th>
+                      <th>Tuesday</th>
+                      <th>Wednesday</th>
+                      <th>Thursday</th>
+                      <th>Friday</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <h3 style="margin-top: 25px" id="today-header">
+                Today's Classes
+              </h3>
+              <ul class="task-list" id="today-classes"></ul>
+            </div>
+          </div>
+
+          <div class="agent-container" id="assignment-agent">
+            <div class="agent-header">
+              <div class="agent-title-group">
+                <div class="agent-icon"><i class="fas fa-tasks"></i></div>
+                <div>
+                  <div class="agent-title">Task Planner</div>
+                  <div class="agent-description">Track tasks & priorities</div>
+                </div>
+              </div>
+              <button
+                id="open-assignment-modal"
+                class="agent-btn"
+                style="
+                  background: var(--success);
+                  width: auto;
+                  display: inline-flex;
+                  padding: 8px 20px;
+                  font-size: 0.9rem;
+                "
+              >
+                <i class="fas fa-plus"></i> Add Task
+              </button>
+            </div>
+            <div class="agent-content">
+              <h3>Current Tasks</h3>
+              <ul class="task-list" id="assignments-list"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar">
+          <div class="card">
+            <h3><i class="fas fa-bell"></i> Notifications</h3>
+            <div id="notifications-list"></div>
+          </div>
+
+          <div class="chat-card">
+            <div class="chat-header-modern">
+              <div style="display: flex; align-items: center; gap: 10px">
+                <i class="fas fa-robot" style="font-size: 1.5rem"></i>
+                <div>
+                  <div style="font-weight: bold; font-size: 1.1rem">
+                    AI Assistant
+                  </div>
+                  <div class="chat-status">
+                    <span class="status-dot"></span> Online
+                  </div>
+                </div>
+              </div>
+              <button
+                class="chat-reset-btn"
+                id="reset-chat-btn"
+                title="New Chat"
+              >
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+              <div class="message ai-message">
+                Hello! I am your professional Smart Campus Assistant. How may I
+                assist you today?
+              </div>
+            </div>
+            <div class="chat-input-area">
+              <input
+                type="text"
+                id="chat-input"
+                placeholder="Type your request..."
+              />
+              <button class="chat-send-btn" id="send-message">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3><i class="fas fa-chart-line"></i> Analytics</h3>
+            <div class="chart-container"><canvas id="studyChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="class-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title">Add New Class</span
+            ><span class="close-modal" id="close-class-x">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Class Name</label
+              ><input
+                type="text"
+                id="modal-class-name"
+                placeholder="e.g. Machine Learning"
+              />
+            </div>
+            <div class="form-group">
+              <label>Teacher</label
+              ><input
+                type="text"
+                id="modal-teacher"
+                placeholder="e.g. Prof. X"
+              />
+            </div>
+            <div class="form-group">
+              <label>Day</label
+              ><select id="modal-day">
+                <option value="" disabled selected>Select Day</option>
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Time Slot</label
+              ><select id="modal-time" disabled>
+                <option value="">Select Day first</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" id="close-class-btn">Cancel</button
+            ><button class="btn-save" id="save-class">Save Class</button>
+          </div>
+        </div>
+      </div>
+      <div id="assignment-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title">Add Task</span
+            ><span class="close-modal" id="close-assign-x">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Title</label
+              ><input
+                type="text"
+                id="modal-assign-title"
+                placeholder="e.g. History Essay"
+              />
+            </div>
+            <div class="form-group">
+              <label>Subject</label
+              ><input
+                type="text"
+                id="modal-assign-subject"
+                placeholder="e.g. History"
+              />
+            </div>
+            <div class="form-group">
+              <label>Due Date</label>
+              <div style="display: flex; gap: 8px; align-items: center">
+                <input type="date" id="modal-assign-date" />
+                <select id="modal-assign-year" title="Select Year"></select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Priority</label
+              ><select id="modal-assign-priority">
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" id="close-assign-btn">Cancel</button
+            ><button class="btn-save" id="save-assignment">Save Task</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="class-details-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title">Class Details</span
+            ><span class="close-modal" id="close-details-x">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div
+              id="class-details-content"
+              style="margin-bottom: 20px; line-height: 1.6; font-size: 1.1rem"
+            ></div>
+            <input type="hidden" id="class-delete-index" />
+            <button
+              class="btn-save"
+              style="background: var(--danger); width: 100%; box-shadow: none"
+              id="btn-delete-class-modal"
+            >
+              <i class="fas fa-trash"></i> Remove This Class
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <footer><p>Smart Campus AI Assistant &copy; 2025</p></footer>
+    </div>
+
+    <script>
+      // ---------- Helper utilities ----------
+      function escapeHtml(str) {
+        if (str === undefined || str === null) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // ---------- App state ----------
+      let chatState = { mode: null, step: 0, data: {} };
+
+      const appData = {
+        classes: [
+          {
+            name: "Data Structures",
+            time: "8:00 AM - 9:00 AM",
+            day: "Monday",
+            instructor: "Prof. Johnson",
+          },
+          {
+            name: "Network Lab",
+            time: "11:00 AM - 12:00 PM",
+            day: "Monday",
+            instructor: "Dr. Smith",
+          },
+          {
+            name: "Calculus II",
+            time: "9:00 AM - 10:00 AM",
+            day: "Tuesday",
+            instructor: "Dr. Adams",
+          },
+          {
+            name: "Web Development",
+            time: "1:00 PM - 2:00 PM",
+            day: "Tuesday",
+            instructor: "Prof. Lee",
+          },
+          {
+            name: "Physics",
+            time: "10:00 AM - 11:00 AM",
+            day: "Wednesday",
+            instructor: "Dr. Einstein",
+          },
+        ],
+        assignments: [
+          {
+            name: "Algorithm Analysis",
+            subject: "DSA",
+            dueDate: "2023-11-20",
+            priority: "High",
+          },
+          {
+            name: "Frontend Project",
+            subject: "Web",
+            dueDate: "2023-11-25",
+            priority: "Medium",
+          },
+        ],
+        notifications: [],
+        timeSlots: [
+          "8:00 AM",
+          "9:00 AM",
+          "10:00 AM",
+          "11:00 AM",
+          "12:00 PM",
+          "1:00 PM",
+          "2:00 PM",
+          "3:00 PM",
+        ],
+        days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      };
+
+      // ---------- Utilities for local date strings ----------
+      function toLocalYMD(d) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      // ---------- DOM ready ----------
+      document.addEventListener("DOMContentLoaded", () => {
+        initializeTimetable();
+        renderTodayClasses();
+        renderAssignments();
+        generateDynamicNotifications();
+        initializeChart();
+        setupEventListeners();
+        populateYearSelector();
+      });
+
+      // ---------- Timetable render ----------
+      function initializeTimetable() {
+        const tbody = document.querySelector("#weekly-timetable tbody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        appData.timeSlots.forEach((time) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td class="time-slot-header">${escapeHtml(
+            time
+          )}</td>`;
+          appData.days.forEach((day) => {
+            const cls = appData.classes.find(
+              (c) => c.day === day && c.time.startsWith(time)
+            );
+            tr.innerHTML += cls
+              ? `<td onclick="openClassDetails('${escapeHtml(
+                  cls.name
+                )}', '${escapeHtml(cls.time)}', '${escapeHtml(
+                  cls.instructor
+                )}')"><div class="class-slot"><span class="class-name">${escapeHtml(
+                  cls.name
+                )}</span></div></td>`
+              : `<td><span class="free-slot">-</span></td>`;
+          });
+          tbody.appendChild(tr);
+        });
+      }
+
+      function renderTodayClasses() {
+        const list = document.getElementById("today-classes");
+        const header = document.getElementById("today-header");
+        if (!list || !header) return;
+        list.innerHTML = "";
+        const todayName = new Date().toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+        header.innerText = `Classes for ${todayName}`;
+        const todaysClasses = appData.classes.filter(
+          (c) => c.day === todayName
+        );
+        if (!todaysClasses.length)
+          list.innerHTML = `<li style="justify-content:center; color:#777;">No classes scheduled for today.</li>`;
+        else {
+          todaysClasses.forEach((c) => {
+            list.innerHTML += `<li onclick="openClassDetails('${escapeHtml(
+              c.name
+            )}', '${escapeHtml(c.time)}', '${escapeHtml(
+              c.instructor
+            )}')"><div class="task-left"><i class="fas fa-book" style="color:var(--primary); margin-right:10px;"></i><div class="task-info"><div class="task-title">${escapeHtml(
+              c.name
+            )}</div><div class="task-meta">${escapeHtml(
+              c.time
+            )}</div></div></div></li>`;
+          });
+        }
+      }
+
+      function openClassDetails(name, time, instructor) {
+        const modal = document.getElementById("class-details-modal");
+        const content = document.getElementById("class-details-content");
+        const hiddenIdx = document.getElementById("class-delete-index");
+        if (!modal || !content || !hiddenIdx) return;
+        const idx = appData.classes.findIndex(
+          (c) => c.name === name && c.time === time
+        );
+        hiddenIdx.value = idx;
+        content.innerHTML = `<strong>Subject:</strong> ${escapeHtml(
+          name
+        )}<br><strong>Time:</strong> ${escapeHtml(
+          time
+        )}<br><strong>Instructor:</strong> ${escapeHtml(instructor)}`;
+        modal.style.display = "block";
+      }
+
+      function handleChatOption(optionText) {
+        const input = document.getElementById("chat-input");
+        if (!input) return;
+        input.value = optionText;
+        document.getElementById("send-message").click();
+      }
+
+      function handleDateSelection(dateStr) {
+        const input = document.getElementById("chat-input");
+        if (!input) return;
+        input.value = dateStr;
+        document.getElementById("send-message").click();
+      }
+
+      function generateChatCalendar() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const monthName = now.toLocaleString("default", { month: "long" });
+        let html = `<div class="chat-calendar"><div class="calendar-month-title">${monthName} ${year}</div><div class="calendar-grid">`;
+        const days = ["S", "M", "T", "W", "T", "F", "S"];
+        days.forEach(
+          (d) => (html += `<div class="calendar-day-header">${d}</div>`)
+        );
+        const firstDay = new Date(year, month, 1).getDay();
+        for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+        for (let i = 1; i <= daysInMonth; i++) {
+          const d = new Date(year, month, i);
+          const dateStr = toLocalYMD(d);
+          html += `<div class="calendar-day" onclick="handleDateSelection('${dateStr}')">${i}</div>`;
+        }
+        html += `</div></div>`;
+        return html;
+      }
+
+      function resetChat() {
+        const chat = document.getElementById("chat-messages");
+        if (!chat) return;
+        chat.innerHTML = `<div class="message ai-message">Hello! I am your professional Smart Campus Assistant. How may I assist you today?</div>`;
+        chatState = { mode: null, step: 0, data: {} };
+      }
+
+      // ---------- Chat processing ----------
+      function processChat(input) {
+        try {
+          const lowerInput = (input || "").toLowerCase().trim();
+          const chat = document.getElementById("chat-messages");
+          const respond = (msg) => {
+            setTimeout(() => {
+              chat.innerHTML += `<div class="message ai-message">${msg}</div>`;
+              chat.scrollTop = chat.scrollHeight;
+            }, 600);
+          };
+
+          const normalize = (s) =>
+            (s || "")
+              .toLowerCase()
+              .replace(/[^\w\s:.-]/g, "")
+              .trim();
+
+          // SIMPLE TRIGGERS
+          if (lowerInput === "hi")
+            return respond(
+              "Hello — how can I assist you today? I can help with adding classes, removing or editing classes, or managing tasks. What would you like to do?"
+            );
+          if (lowerInput === "hlo")
+            return respond(
+              "I can add classes, manage tasks, edit or remove classes or tasks."
+            );
+          if (lowerInput === "hello")
+            return respond(
+              "Hello — I didn't catch that. I can help you add classes or track tasks. Please tell me what you'd like to do."
+            );
+
+          // NEW LOGIC: List classes for today
+          if (
+            (lowerInput.includes("list") && lowerInput.includes("today")) ||
+            (lowerInput.includes("class") && lowerInput.includes("today")) ||
+            lowerInput === "today"
+          ) {
+            const daysMap = [
+              "Sunday",
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+            ];
+            const now = new Date();
+            const dayName = daysMap[now.getDay()];
+            const classes = appData.classes.filter((c) => c.day === dayName);
+
+            if (classes.length === 0) {
+              return respond(`No classes scheduled for today (${dayName}).`);
+            }
+            let msg = `<strong>Classes for Today (${dayName}):</strong><br>`;
+            classes.forEach((c) => {
+              msg += `• ${escapeHtml(c.name)} (${escapeHtml(c.time)})<br>`;
+            });
+            return respond(msg);
+          }
+
+          // NEW LOGIC: List classes for tomorrow
+          if (lowerInput.includes("tomorrow")) {
+            const daysMap = [
+              "Sunday",
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+            ];
+            const now = new Date();
+            const tmr = new Date(now);
+            tmr.setDate(now.getDate() + 1);
+            const dayName = daysMap[tmr.getDay()];
+            const classes = appData.classes.filter((c) => c.day === dayName);
+
+            if (classes.length === 0) {
+              return respond(`No classes scheduled for tomorrow (${dayName}).`);
+            }
+            let msg = `<strong>Classes for Tomorrow (${dayName}):</strong><br>`;
+            classes.forEach((c) => {
+              msg += `• ${escapeHtml(c.name)} (${escapeHtml(c.time)})<br>`;
+            });
+            return respond(msg);
+          }
+
+          // REVISED LOGIC: Pending Tasks (Shows ALL)
+          if (lowerInput.includes("pending tasks")) {
+            if (appData.assignments.length === 0) {
+              return respond("You have no pending tasks. Great job!");
+            }
+            let msg = `<strong>Pending Tasks:</strong><br>`;
+            appData.assignments.forEach((a) => {
+              msg += `• ${escapeHtml(a.name)} (${escapeHtml(
+                a.subject
+              )}) - Due: ${escapeHtml(a.dueDate)}<br>`;
+            });
+            return respond(msg);
+          }
+
+          // REVISED LOGIC: Upcoming Tasks (Shows only FUTURE)
+          if (lowerInput.includes("upcoming tasks")) {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); // reset time to start of day for accurate compare
+
+            const upcoming = appData.assignments.filter((a) => {
+              const datePart = a.dueDate.split(" at ")[0];
+              const d = new Date(datePart);
+              return d >= now;
+            });
+
+            if (upcoming.length === 0) {
+              return respond("No upcoming tasks.");
+            }
+            let msg = `<strong>Upcoming Tasks:</strong><br>`;
+            upcoming.forEach((a) => {
+              msg += `• ${escapeHtml(a.name)} (${escapeHtml(
+                a.subject
+              )}) - Due: ${escapeHtml(a.dueDate)}<br>`;
+            });
+            return respond(msg);
+          }
+
+          if (lowerInput === "add class") {
+            chatState = { mode: "await_class_subject", step: 0, data: {} };
+            return respond("Sure — what is the subject name for the class?");
+          }
+          if (lowerInput === "add task") {
+            chatState = { mode: "await_task_name", step: 0, data: {} };
+            return respond("Sure — what is the task name?");
+          }
+          if (lowerInput === "remove class") {
+            chatState = { mode: "remove_class", step: 1, data: {} };
+            return respond(
+              "Which class would you like to remove? Please type the subject name."
+            );
+          }
+          if (lowerInput === "remove task") {
+            if (!appData.assignments.length) {
+              return respond("There are no tasks to remove.");
+            }
+            const chips = appData.assignments
+              .map(
+                (a, i) =>
+                  `<button class="chat-chip" onclick="removeTaskViaChat(${i})">${escapeHtml(
+                    a.name
+                  )} — ${escapeHtml(a.dueDate)}</button>`
+              )
+              .join(" ");
+            return respond(`Select the task to remove:<br>${chips}`);
+          }
+
+          // LOGIC FOR ADDING CLASS
+          if (chatState.mode === "await_class_subject") {
+            const subject = input;
+            chatState = { mode: "class", step: 1, data: { name: subject } };
+            const chips = appData.days
+              .map(
+                (d) =>
+                  `<button class="chat-chip" onclick="handleChatOption('${d}')">${d}</button>`
+              )
+              .join(" ");
+            return respond(
+              `Okay, adding class <strong>${escapeHtml(
+                subject
+              )}</strong>.<br>Which day?<br>${chips}`
+            );
+          }
+          if (chatState.mode === "class" && chatState.step === 1) {
+            const day = appData.days.find(
+              (d) => d.toLowerCase() === lowerInput
+            );
+            if (day) {
+              chatState.data.day = day;
+              chatState.step = 2;
+              const occ = appData.classes
+                .filter((c) => c.day === day)
+                .map((c) => c.time.split(" - ")[0]);
+              const vac = appData.timeSlots.filter((s) => !occ.includes(s));
+              if (vac.length === 0) {
+                chatState = { mode: null, step: 0, data: {} };
+                return respond(`Sorry, ${day} is fully booked.`);
+              }
+              const chips = vac
+                .map((v) => {
+                  const fullRange = `${v} - ${calculateEnd(v)}`;
+                  return `<button class="chat-chip" onclick="handleChatOption('${v}')">${fullRange}</button>`;
+                })
+                .join(" ");
+              return respond(
+                `<strong>${day}</strong> selected. Available times:<br>${chips}<br><br>Select or type start time.`
+              );
+            } else
+              return respond("Please enter a valid day (Monday - Friday).");
+          }
+          if (chatState.mode === "class" && chatState.step === 2) {
+            const chosenStart = appData.timeSlots.find((t) =>
+              normalize(input).includes(normalize(t))
+            );
+            if (chosenStart) {
+              const fullTime = `${chosenStart} - ${calculateEnd(chosenStart)}`;
+              appData.classes.push({
+                name: chatState.data.name,
+                day: chatState.data.day,
+                time: fullTime,
+                instructor: "TBD",
+              });
+              initializeTimetable();
+              renderTodayClasses();
+              generateDynamicNotifications();
+              chatState = { mode: null, step: 0, data: {} };
+              return respond(
+                `Class <strong>${escapeHtml(
+                  appData.classes[appData.classes.length - 1].name
+                )}</strong> added successfully.`
+              );
+            } else return respond("Invalid time slot.");
+          }
+
+          // LOGIC FOR ADDING TASK
+          if (chatState.mode === "await_task_name") {
+            chatState.data.name = input;
+            chatState.mode = "assignment";
+            chatState.step = 1.5;
+            const calendarHTML = generateChatCalendar();
+            return respond(
+              `Okay, adding task <strong>${escapeHtml(
+                input
+              )}</strong>.<br>Please select a due date:<br>${calendarHTML}`
+            );
+          }
+          if (chatState.mode === "assignment" && chatState.step === 1.5) {
+            chatState.data.date = input;
+            chatState.step = 2;
+            return respond(
+              `Got it (${escapeHtml(
+                input
+              )}). What time is it due? (e.g., 5:00 PM)`
+            );
+          }
+          if (chatState.mode === "assignment" && chatState.step === 2) {
+            const dueString = `${chatState.data.date} at ${input}`;
+            appData.assignments.push({
+              name: chatState.data.name,
+              subject: "General",
+              dueDate: dueString,
+              priority: "Medium",
+            });
+            renderAssignments();
+            chatState = { mode: null, step: 0, data: {} };
+            return respond(
+              `Task "${escapeHtml(
+                appData.assignments[appData.assignments.length - 1].name
+              )}" added successfully.`
+            );
+          }
+
+          // LOGIC FOR REMOVE CLASS
+          if (chatState.mode === "remove_class" && chatState.step === 1) {
+            const subject = (input || "").trim();
+            if (!subject) {
+              chatState = { mode: null, step: 0, data: {} };
+              return respond("No subject provided.");
+            }
+            const matches = appData.classes.filter((c) =>
+              c.name.toLowerCase().includes(subject.toLowerCase())
+            );
+            if (matches.length === 0) {
+              chatState = { mode: null, step: 0, data: {} };
+              return respond(
+                `I could not find any class named "${escapeHtml(subject)}".`
+              );
+            }
+            const daysFound = [...new Set(matches.map((c) => c.day))];
+            if (daysFound.length === 1 && matches.length === 1) {
+              const idx = appData.classes.indexOf(matches[0]);
+              appData.classes.splice(idx, 1);
+              initializeTimetable();
+              renderTodayClasses();
+              generateDynamicNotifications();
+              chatState = { mode: null, step: 0, data: {} };
+              return respond(
+                `Deleted <strong>${escapeHtml(
+                  subject
+                )}</strong> (was on ${escapeHtml(
+                  matches[0].day
+                )} at ${escapeHtml(matches[0].time)}).`
+              );
+            }
+            chatState.step = 2;
+            chatState.data.name = subject;
+            chatState.data.matches = matches;
+            const chips = daysFound
+              .map(
+                (d) =>
+                  `<button class="chat-chip" onclick="handleChatOption('${d}')">${d}</button>`
+              )
+              .join(" ");
+            return respond(
+              `Found <strong>${escapeHtml(subject)}</strong> on: ${escapeHtml(
+                daysFound.join(", ")
+              )}.<br>Which day?<br>${chips}`
+            );
+          }
+
+          if (chatState.mode === "remove_class" && chatState.step === 2) {
+            const day = appData.days.find(
+              (d) => d.toLowerCase() === lowerInput
+            );
+            if (day) {
+              const dayMatches = (chatState.data.matches || []).filter(
+                (c) => c.day === day
+              );
+              if (dayMatches.length === 1) {
+                const idx = appData.classes.indexOf(dayMatches[0]);
+                appData.classes.splice(idx, 1);
+                initializeTimetable();
+                renderTodayClasses();
+                generateDynamicNotifications();
+                chatState = { mode: null, step: 0, data: {} };
+                return respond(
+                  `Deleted <strong>${escapeHtml(
+                    chatState.data.name
+                  )}</strong> on ${escapeHtml(day)}.`
+                );
+              } else {
+                chatState.step = 3;
+                chatState.data.dayMatches = dayMatches;
+                const timeChips = dayMatches
+                  .map(
+                    (c) =>
+                      `<button class="chat-chip" onclick="handleChatOption('${
+                        c.time.split(" - ")[0]
+                      }')">${escapeHtml(c.time)}</button>`
+                  )
+                  .join(" ");
+                return respond(
+                  `Multiple classes found on ${escapeHtml(
+                    day
+                  )}. Which slot to remove?<br>${timeChips}`
+                );
+              }
+            } else return respond("Please enter a valid day.");
+          }
+
+          if (chatState.mode === "remove_class" && chatState.step === 3) {
+            const dayMatches = chatState.data.dayMatches || [];
+            const targetClass = dayMatches.find((c) => {
+              const start = c.time.split(" - ")[0].toLowerCase();
+              return (
+                input.toLowerCase().includes(start) ||
+                input.toLowerCase().includes(c.time.toLowerCase())
+              );
+            });
+            if (targetClass) {
+              const idx = appData.classes.indexOf(targetClass);
+              appData.classes.splice(idx, 1);
+              initializeTimetable();
+              renderTodayClasses();
+              generateDynamicNotifications();
+              chatState = { mode: null, step: 0, data: {} };
+              return respond(
+                `Deleted <strong>${escapeHtml(
+                  targetClass.name
+                )}</strong> at ${escapeHtml(targetClass.time)}.`
+              );
+            } else return respond("Time slot not found.");
+          }
+
+          // FALLBACK
+          return respond(
+            "Hello — I didn't catch that. I can help you add classes or track tasks. Please tell me what you'd like to do."
+          );
+        } catch (err) {
+          console.error("processChat error:", err);
+          const chat = document.getElementById("chat-messages");
+          if (chat)
+            chat.innerHTML += `<div class="message ai-message">Oops — something went wrong while processing that. Please try again.</div>`;
+          chatState = { mode: null, step: 0, data: {} };
+        }
+      }
+
+      // ---------- Remove task via chat button ----------
+      function removeTaskViaChat(index) {
+        const task = appData.assignments[index];
+        if (!task) {
+          const chat = document.getElementById("chat-messages");
+          if (chat)
+            chat.innerHTML += `<div class="message ai-message">Task not found.</div>`;
+          return;
+        }
+        appData.assignments.splice(index, 1);
+        renderAssignments();
+        generateDynamicNotifications();
+        const chat = document.getElementById("chat-messages");
+        if (chat)
+          chat.innerHTML += `<div class="message ai-message">Removed task <strong>${escapeHtml(
+            task.name
+          )}</strong>.</div>`;
+      }
+
+      // ---------- NOTIFICATIONS ----------
+      function generateDynamicNotifications() {
+        const list = document.getElementById("notifications-list");
+        if (!list) return;
+        list.innerHTML = "";
+        const todayName = new Date().toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+        const todayCount = appData.classes.filter(
+          (c) => c.day === todayName
+        ).length;
+
+        if (todayCount > 0)
+          addNotification(
+            "fa-calendar-day",
+            `Today's Schedule`,
+            `You have ${todayCount} classes today.`,
+            "timetable",
+            "var(--primary)",
+            "today"
+          );
+        else
+          addNotification(
+            "fa-smile",
+            `Free Day`,
+            `No classes today.`,
+            "timetable",
+            "var(--primary)",
+            "today"
+          );
+
+        const highPri = appData.assignments.filter(
+          (a) => a.priority === "High"
+        ).length;
+        if (highPri > 0)
+          addNotification(
+            "fa-fire",
+            "High Priority",
+            `You have ${highPri} high priority tasks.`,
+            "assignment",
+            "var(--warning)",
+            "high"
+          );
+      }
+
+      function addNotification(
+        icon,
+        title,
+        details,
+        type,
+        color = "var(--primary)",
+        filter = ""
+      ) {
+        const html = `
+            <div class="notification-item" onclick="handleNotificationClick('${type}', '${filter}')">
+                <i class="fas ${icon}" style="margin-right:12px; color:${color}; font-size:1.2rem;"></i>
+                <div><div style="font-weight:bold; font-size:0.95rem;">${escapeHtml(
+                  title
+                )}</div><small style="color:#666">${escapeHtml(
+          details
+        )}</small></div>
+            </div>`;
+        document.getElementById("notifications-list").innerHTML += html;
+      }
+
+      function handleNotificationClick(type, filter) {
+        const target = type === "assignment" ? "assignment" : "timetable";
+        const btn = document.querySelector(
+          `.agent-btn[data-agent="${target}"]`
+        );
+        if (btn) btn.click();
+
+        setTimeout(() => {
+          if (type === "assignment" && filter === "high") {
+            const badges = document.querySelectorAll(".priority-high");
+            badges.forEach((b) => {
+              const row = b.closest("li");
+              if (row) triggerHighlight(row);
+            });
+          } else if (type === "timetable" && filter === "today") {
+            const listItems = document.querySelectorAll("#today-classes li");
+            if (listItems.length > 0)
+              listItems.forEach((li) => triggerHighlight(li));
+            else {
+              const list = document.getElementById("today-classes");
+              if (list) triggerHighlight(list);
+            }
+          }
+        }, 100);
+      }
+
+      function triggerHighlight(el) {
+        if (!el) return;
+        el.classList.remove("highlight-active");
+        void el.offsetWidth;
+        el.classList.add("highlight-active");
+      }
+
+      // ---------- Manual removal functions ----------
+      function removeTask(index) {
+        appData.assignments.splice(index, 1);
+        renderAssignments();
+      }
+
+      function removeClass(index) {
+        const removed = appData.classes.splice(index, 1)[0];
+        initializeTimetable();
+        renderTodayClasses();
+        generateDynamicNotifications();
+      }
+
+      function renderAssignments() {
+        const target = document.getElementById("assignments-list");
+        if (!target) return;
+        target.innerHTML = appData.assignments
+          .map(
+            (a, i) => `
+            <li>
+                <div class="task-left">
+                    <i class="fas fa-pen-fancy" style="color:var(--secondary); margin-right:10px;"></i>
+                    <div class="task-info"><div class="task-title">${escapeHtml(
+                      a.name
+                    )} <span class="priority-badge priority-${a.priority.toLowerCase()}">${escapeHtml(
+              a.priority
+            )}</span></div><div class="task-meta">${escapeHtml(
+              a.subject
+            )} | Due: ${escapeHtml(a.dueDate)}</div></div>
+                </div>
+                <button class="delete-btn" onclick="removeTask(${i})" title="Remove Task"><i class="fas fa-trash"></i></button>
+            </li>`
+          )
+          .join("");
+      }
+
+      function calculateEnd(s) {
+        if (!s) return "";
+        const parts = s.split(" ");
+        let [t, p] = [parts[0], parts[1] || "AM"];
+        let [h, m] = t.split(":").map(Number);
+        if (isNaN(h)) h = 0;
+        if (isNaN(m)) m = 0;
+        h = h + 1;
+        if (h === 12) {
+          p = p === "AM" ? "PM" : "AM";
+        } else if (h > 12) {
+          h = h - 12;
+        }
+        const mm = m.toString().padStart(2, "0");
+        return `${h}:${mm} ${p}`;
+      }
+
+      // ---------- EVENTS & MODALS ----------
+      function setupEventListeners() {
+        document.querySelectorAll(".agent-btn[data-agent]").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            document
+              .querySelectorAll(".agent-btn")
+              .forEach((b) => b.classList.remove("active"));
+            document
+              .querySelectorAll(".agent-container")
+              .forEach((c) => c.classList.remove("active"));
+            this.classList.add("active");
+            const el = document.getElementById(this.dataset.agent + "-agent");
+            if (el) el.classList.add("active");
+          });
+        });
+
+        setupModal(
+          "class-modal",
+          "open-class-modal",
+          "close-class-btn",
+          "close-class-x",
+          resetClassModal
+        );
+        setupModal(
+          "assignment-modal",
+          "open-assignment-modal",
+          "close-assign-btn",
+          "close-assign-x",
+          resetAssignModal
+        );
+
+        const detailModal = document.getElementById("class-details-modal");
+        const closeDetail = () => (detailModal.style.display = "none");
+        const closeDetailsBtn = document.getElementById("close-details-x");
+        if (closeDetailsBtn) closeDetailsBtn.onclick = closeDetail;
+        const delBtn = document.getElementById("btn-delete-class-modal");
+        if (delBtn) {
+          delBtn.onclick = () => {
+            const idxStr = document.getElementById("class-delete-index").value;
+            const idx = parseInt(idxStr, 10);
+            if (!isNaN(idx) && idx > -1) {
+              appData.classes.splice(idx, 1);
+              initializeTimetable();
+              renderTodayClasses();
+              generateDynamicNotifications();
+              closeDetail();
+            }
+          };
+        }
+
+        const saveClassBtn = document.getElementById("save-class");
+        if (saveClassBtn) saveClassBtn.onclick = () => saveItem("class");
+        const saveAssignBtn = document.getElementById("save-assignment");
+        if (saveAssignBtn) saveAssignBtn.onclick = () => saveItem("assignment");
+
+        const sendBtn = document.getElementById("send-message");
+        if (sendBtn) {
+          sendBtn.onclick = () => {
+            const i = document.getElementById("chat-input");
+            if (i && i.value) {
+              const c = document.getElementById("chat-messages");
+              c.innerHTML += `<div class="message user-message">${escapeHtml(
+                i.value
+              )}</div>`;
+              c.scrollTop = c.scrollHeight;
+              processChat(i.value);
+              i.value = "";
+            }
+          };
+        }
+
+        const chatInput = document.getElementById("chat-input");
+        if (chatInput) {
+          chatInput.addEventListener("keypress", function (e) {
+            if (e.key === "Enter")
+              document.getElementById("send-message").click();
+          });
+        }
+
+        const resetBtn = document.getElementById("reset-chat-btn");
+        if (resetBtn) resetBtn.onclick = resetChat;
+
+        const modalDay = document.getElementById("modal-day");
+        if (modalDay) {
+          modalDay.addEventListener("change", function () {
+            const selectedDay = this.value;
+            const occ = appData.classes
+              .filter((c) => c.day === selectedDay)
+              .map((c) => c.time.split(" - ")[0]);
+            const vac = appData.timeSlots.filter((s) => !occ.includes(s));
+            const sel = document.getElementById("modal-time");
+            if (!sel) return;
+            if (vac.length) {
+              sel.innerHTML = vac
+                .map((v) => {
+                  const endTime = calculateEnd(v);
+                  const fullRange = `${v} - ${endTime}`;
+                  return `<option value="${fullRange}">${fullRange}</option>`;
+                })
+                .join("");
+              sel.disabled = false;
+            } else {
+              sel.innerHTML = "<option>No free slots</option>";
+              sel.disabled = true;
+            }
+          });
+        }
+      }
+
+      function setupModal(mId, oId, cId, xId, rFunc) {
+        const m = document.getElementById(mId);
+        const open = document.getElementById(oId);
+        const closeBtn = document.getElementById(cId);
+        const xBtn = document.getElementById(xId);
+        if (!m || !open) return;
+        open.onclick = () => {
+          m.style.display = "block";
+          if (typeof rFunc === "function") rFunc();
+        };
+        const close = () => (m.style.display = "none");
+        if (closeBtn) closeBtn.onclick = close;
+        if (xBtn) xBtn.onclick = close;
+        window.addEventListener("click", (e) => {
+          if (e.target == m) close();
+        });
+      }
+
+      function resetClassModal() {
+        const a = document.getElementById("modal-class-name");
+        const b = document.getElementById("modal-teacher");
+        const d = document.getElementById("modal-day");
+        const t = document.getElementById("modal-time");
+        if (a) a.value = "";
+        if (b) b.value = "";
+        if (d) d.value = "";
+        if (t) {
+          t.innerHTML = "<option>Select Day first</option>";
+          t.disabled = true;
+        }
+      }
+      function resetAssignModal() {
+        const t = document.getElementById("modal-assign-title");
+        const s = document.getElementById("modal-assign-subject");
+        const d = document.getElementById("modal-assign-date");
+        const y = document.getElementById("modal-assign-year");
+        if (t) t.value = "";
+        if (s) s.value = "";
+        if (d) d.value = "";
+        if (y) y.selectedIndex = 0;
+      }
+
+      function saveItem(type) {
+        if (type === "class") {
+          const n = document.getElementById("modal-class-name").value.trim();
+          const tchr = document.getElementById("modal-teacher").value.trim();
+          const d = document.getElementById("modal-day").value;
+          const t = document.getElementById("modal-time").value;
+
+          if (!n || !d || !t) {
+            alert("Please fill in all fields.");
+            return;
+          }
+
+          appData.classes.push({
+            name: n,
+            day: d,
+            time: t,
+            instructor: tchr || "TBD",
+          });
+          initializeTimetable();
+          renderTodayClasses();
+          generateDynamicNotifications();
+        } else if (type === "assignment") {
+          const t = document.getElementById("modal-assign-title").value.trim();
+          const s = document
+            .getElementById("modal-assign-subject")
+            .value.trim();
+          const dateVal = document.getElementById("modal-assign-date").value;
+          if (t && s && dateVal) {
+            appData.assignments.push({
+              name: t,
+              subject: s,
+              dueDate: dateVal,
+              priority: document.getElementById("modal-assign-priority").value,
+            });
+            renderAssignments();
+            generateDynamicNotifications();
+          } else {
+            alert("Please provide title, subject and a due date.");
+            return;
+          }
+        }
+        document
+          .querySelectorAll(".modal")
+          .forEach((m) => (m.style.display = "none"));
+      }
+
+      // ---------- Chart ----------
+      function initializeChart() {
+        const el = document.getElementById("studyChart");
+        if (!el || typeof Chart === "undefined") return;
+        new Chart(el, {
+          type: "bar",
+          data: {
+            labels: ["M", "T", "W", "T", "F"],
+            datasets: [{ data: [4, 6, 3, 5, 4], backgroundColor: "#4361ee" }],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { display: false }, x: { grid: { display: false } } },
+          },
+        });
+      }
+
+      // ---------- Year selector for assignment date ----------
+      function populateYearSelector() {
+        const sel = document.getElementById("modal-assign-year");
+        const dateInput = document.getElementById("modal-assign-date");
+        if (!sel || !dateInput) return;
+        // set wide min/max for date input so year selection can go far
+        dateInput.min = "1900-01-01";
+        dateInput.max = "2100-12-31";
+        const currentYear = new Date().getFullYear();
+        const start = 1900;
+        const end = 2100;
+        sel.innerHTML = `<option value="">Year</option>`;
+        for (let y = end; y >= start; y--) {
+          const opt = document.createElement("option");
+          opt.value = String(y);
+          opt.textContent = String(y);
+          if (y === currentYear) opt.selected = true;
+          sel.appendChild(opt);
+        }
+        // when year changes, update the date input to keep the same month/day if present
+        sel.addEventListener("change", () => {
+          const y = sel.value;
+          if (!y) return;
+          const cur = dateInput.value ? new Date(dateInput.value) : new Date();
+          const mm = String(cur.getMonth() + 1).padStart(2, "0");
+          const dd = String(cur.getDate()).padStart(2, "0");
+          const newVal = `${y}-${mm}-${dd}`;
+          // clamp to min/max
+          if (new Date(newVal) < new Date(dateInput.min)) {
+            dateInput.value = dateInput.min;
+          } else if (new Date(newVal) > new Date(dateInput.max)) {
+            dateInput.value = dateInput.max;
+          } else {
+            dateInput.value = newVal;
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
